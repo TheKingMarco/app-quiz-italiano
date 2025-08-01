@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz di Grammatica Italiana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .answer-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .correct {
+            background-color: #22c55e !important; /* green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* green-600 */
+            transform: scale(1.02);
+        }
+        .incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* red-600 */
+        }
+        .disabled-options {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-container" class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-4">Quiz di Grammatica Italiana</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">Metti alla prova la tua conoscenza! Rispondi a 40 domande selezionate casualmente.</p>
+            <button id="start-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
+                Inizia il Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <p id="question-counter" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Domanda 1 di 40</p>
+                    <p id="score-display" class="text-sm font-semibold text-gray-600 dark:text-gray-400">Punteggio: 0</p>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <h2 id="question-text" class="text-xl md:text-2xl font-semibold mb-6 text-center min-h-[100px]"></h2>
+            
+            <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Answer buttons will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">Quiz Completato!</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">Il tuo punteggio finale è:</p>
+            <p id="final-score" class="text-6xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-8">0 / 40</p>
+            <button id="restart-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
+                Riprova
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATABASE DELLE DOMANDE ---
+        // Dati estratti e puliti dal PDF fornito
+        const quizData = [
+            { question: "Quando si usa il futuro anteriore indicativo?", options: ["Il futuro anteriore indica un evento futuro che si sta compiendo mentre parliamo.", "Il futuro anteriore indica un evento futuro che potrebbe avvenire.", "Il futuro anteriore indica un evento futuro che deve ancora avvenire.", "Il futuro anteriore indica un evento futuro che si è già compiuto o si compirà, prima che se ne realizzi un altro nel futuro."], answer: "Il futuro anteriore indica un evento futuro che si è già compiuto o si compirà, prima che se ne realizzi un altro nel futuro." },
+            { question: "In quale frase manca il presente indicativo?", options: ["Luca non viene al lago con noi, perché non ha finito i compiti.", "Dopo aver raggiunto i genitori, Davide andò subito in spiaggia.", "Signora dove si trova Corso Cavour?", "Le lezioni iniziano alle 8 e terminano alle 13."], answer: "Dopo aver raggiunto i genitori, Davide andò subito in spiaggia." },
+            { question: "Nella frase \"Ognuno di noi porterà dei dolci per la festa. Se anche tu portassi qualcosa, ci faresti un piacere\", da che cosa può essere sostituita l'espressione \"ci faresti?\".", options: ["Faresti a noi.", "Faresti con noi.", "Faresti noi.", "Faresti di noi."], answer: "Faresti a noi." },
+            { question: "Quale delle seguenti definizioni è corretta e completa?", options: ["La preposizione è una parte variabile del discorso che si premette ad una parola per collegarla e metterla in relazione ad un'altra.", "La preposizione è una parte variabile del discorso che si premette ad un verbo per collegarlo e metterlo in relazione ad un altro.", "La preposizione è una parte invariabile del discorso che si premette ad una parola per collegarla e metterla in relazione ad un'altra.", "La preposizione è una parte invariabile del discorso che si premette ad una parola."], answer: "La preposizione è una parte invariabile del discorso che si premette ad una parola per collegarla e metterla in relazione ad un'altra." },
+            { question: "Quale tra questi aggettivi presenta lo stesso grado di ottimo?", options: ["Massimo.", "Superiore.", "Maggiore.", "Grande."], answer: "Massimo." },
+            { question: "Quale tra i seguenti è un articolo determinativo, femminile, singolare?", options: ["Una", "La", "I", "Lo"], answer: "La" },
+            { question: "Quale tra i seguenti è un articolo indeterminativo, maschile, singolare?", options: ["Lo", "Gli", "Una", "Un"], answer: "Un" },
+            { question: "Quale tra i seguenti è un articolo determinativo, maschile, singolare?", options: ["Una", "Un", "Il", "Le"], answer: "Il" },
+            { question: "Quale tra i seguenti è un articolo determinativo, femminile, plurale?", options: ["Le", "Una", "Delle", "I"], answer: "Le" },
+            { question: "Quale è il nome corretto? NOME COMUNE, ASTRATTO, NUMERO PLURALE, GENERE FEMMINILE", options: ["Ricordi", "Medaglia", "Speranze", "Fotografie"], answer: "Speranze" },
+            { question: "Quale è il nome corretto? NOME COMUNE, CONCRETO, NUMERO PLURALE, GENERE MASCHILE", options: ["Secchiello", "Ombrelloni", "Sdraio", "Mareggiate"], answer: "Ombrelloni" },
+            { question: "Quale tra i seguenti è un articolo determinativo, maschile, plurale?", options: ["Un", "Il", "Gli", "Uno"], answer: "Gli" },
+            { question: "Quale è il nome corretto? NOME COMUNE, CONCRETO, NUMERO: SINGOLARE, GENERE: FEMMINILE", options: ["Scoglio", "Caffetteria", "Camilla", "Altezzosità"], answer: "Caffetteria" },
+            { question: "Quale è il nome corretto? NOME COMUNE, CONCRETO, NUMERO PLURALE, GENERE FEMMINILE", options: ["Candelotti", "Lampadine", "Luminosità", "Luce"], answer: "Lampadine" },
+            { question: "Quale è il nome corretto? NOME COMUNE, ASTRATTO, NUMERO PLURALE, GENERE MASCHILE", options: ["Processo", "Sentinella", "Errore", "Rimpianti"], answer: "Rimpianti" },
+            { question: "Quale è il nome corretto? NOME COMUNE, ASTRATTO, NUMERO SINGOLARE, GENERE MASCHILE", options: ["Desiderio", "Motorino", "Lettera", "Sospiri"], answer: "Desiderio" },
+            { question: "Quale è il nome corretto? NOME COMUNE, CONCRETO, NUMERO PLURALE, GENERE FEMMINILE", options: ["Chitarre", "Flauti", "Musicalità", "Sinfonia"], answer: "Chitarre" },
+            { question: "Quale è il nome corretto? NOME COMUNE, ASTRATTO, NUMERO: SINGOLARE, GENERE: FEMMINILE", options: ["Irriverenza", "Lusso", "Lavagna", "Montagna"], answer: "Irriverenza" },
+            { question: "Quale tra i seguenti è un articolo indeterminativo, maschile, singolare?", options: ["Una", "Uno", "Lo", "Gli"], answer: "Uno" },
+            { question: "Quale tra i seguenti è un articolo indeterminativo, femminile, singolare?", options: ["Le", "La", "Il", "Una"], answer: "Una" },
+            { question: "I nomi propri:", options: ["Individuano in modo preciso un singolo elemento, lo distinguono da tutti gli altri e si scrivono con la lettera maiuscola.", "Di persona o di cosa non possono mai essere usati come nomi comuni.", "Indicano in modo generico un qualunque elemento di una categoria.", "Rimandano a qualcosa di non materiale che si può solo immaginare."], answer: "Individuano in modo preciso un singolo elemento, lo distinguono da tutti gli altri e si scrivono con la lettera maiuscola." },
+            { question: "Hanno un'unica forma:", options: ["I nomi indipendenti e i nomi mobili.", "I nomi ambigenere che terminano in -e, -a, -ante, ista, -cida, -iatra e i nomi di genere promiscuo.", "I nomi mobili e i nomi ambigenere.", "I nomi indipendenti e i nomi di genere promiscuo."], answer: "I nomi ambigenere che terminano in -e, -a, -ante, ista, -cida, -iatra e i nomi di genere promiscuo." },
+            { question: "Alcuni nomi sono invariabili e mantengono la stessa forma sia al singolare che al plurale; il loro numero può essere distinto solo per la concordanza con altre parti variabili del discorso. Non rientrano in questa categoria:", options: ["I monosillabi che terminano in vocale: gru, sci, re.", "Tutti i nomi maschili che terminano in -a e tutti i nomi femminili che terminano in -o e in -ie.", "I nomi terminanti in vocale accentata: città, oblò, virtù.", "I nomi di origine straniera: film, garage, kebab."], answer: "Tutti i nomi maschili che terminano in -a e tutti i nomi femminili che terminano in -o e in -ie." },
+            { question: "Quali fra i seguenti sono nomi difettivi?", options: ["Il grano, il colera, la flora.", "Aprile, il posto, il pizzo.", "Il porto, il modo, la torta.", "Lo zolfo, il fogliame, il coltello."], answer: "Il grano, il colera, la flora." },
+            { question: "Nella frase: \"L'orsacchiotto gioca nella foresta\", \"orsacchiotto\" è:", options: ["Nome comune di cosa, concreto, maschile, singolare, alterato.", "Nome comune di animale, concreto, maschile, singolare, alterato.", "Nome comune di cosa, astratto, maschile, singolare, alterato.", "Nome comune di animale, concreto, maschile, singolare, primitivo."], answer: "Nome comune di animale, concreto, maschile, singolare, alterato." },
+            { question: "Quale fra i seguenti è un nome astratto?", options: ["Bellezza.", "Volpe.", "Etna.", "Pioggia."], answer: "Bellezza." },
+            { question: "Quali fra i seguenti nomi cambiano genere al plurale?", options: ["Ala, caramella, crisi.", "Arma, carcere, finestra.", "Gorilla, uovo, cane.", "Uovo, carcere, eco."], answer: "Uovo, carcere, eco." },
+            { question: "I nomi non numerabili:", options: ["Indicano concetti astratti, sostanze o materiali che non possono essere contati in unità separate.", "Indicano un insieme di elementi della stessa categoria il cui numero può essere indeterminato.", "Non hanno mai la forma singolare.", "Hanno solo la forma plurale."], answer: "Indicano concetti astratti, sostanze o materiali che non possono essere contati in unità separate." },
+            { question: "Nella frase: \"Rachele fu svegliata da un pianto sommesso\", \"pianto\" è:", options: ["Nome comune di cosa, concreto, maschile, singolare, primitivo.", "Nome comune di cosa, astratto, maschile, singolare, primitivo.", "Nome comune di cosa, concreto, maschile, plurale, primitivo.", "Nome comune di cosa, concreto, maschile, singolare, derivato."], answer: "Nome comune di cosa, astratto, maschile, singolare, primitivo." },
+            { question: "Foglio, trapano, grissino, sogno:", options: ["Sono tutti nomi non numerabili.", "Foglio, trapano, grissino sono nomi numerabili, sogno è un nome non numerabile.", "Sono tutti nomi numerabili.", "Foglio, trapano sono nomi numerabili, grissino e sogno sono nomi non numerabili."], answer: "Foglio, trapano, grissino sono nomi numerabili, sogno è un nome non numerabile." },
+            { question: "I nomi comuni indicano in modo generico un qualunque elemento di una categoria. Sono esempi di nomi comuni:", options: ["Tevere, fiume, odio.", "Cane, Marco, gioventù.", "Furetto, squalo, Berlino.", "Tartaruga, vulcano, ragazza."], answer: "Tartaruga, vulcano, ragazza." },
+            { question: "Indicare l'opzione contenente solo nomi comuni concreti.", options: ["Amicizia, pace.", "Profumo, aceto.", "Ragazzo, odio.", "Francia, pioggia."], answer: "Profumo, aceto." },
+            { question: "1. La \"gioventù\" del paese era in festa. 2. Gianluca ha \"naso\" per gli affari. 3. La \"gioventù\" è un'età spensierata. 4. Cadendo mi sono rotta il \"naso\". In quali delle precedenti frasi i nomi concreti virgolettati sono usati in senso astratto?", options: ["1 e 4", "1 e 2", "3 e 4", "3 e 2"], answer: "3 e 2" },
+            { question: "Nella frase: \"Il cacciatore camminava tra il fogliame\", \"fogliame\" è:", options: ["Nome comune di cosa, concreto, individuale, maschile, singolare, derivato.", "Nome comune di cosa, concreto, collettivo, maschile, singolare, derivato.", "Nome comune di cosa, concreto, collettivo, femminile, singolare, derivato.", "Nome comune di cosa, astratto, collettivo, maschile, singolare, primitivo."], answer: "Nome comune di cosa, concreto, collettivo, maschile, singolare, derivato." },
+            { question: "Quale fra le seguenti parole corrisponde a un avverbio?", options: ["Reale", "Realmente", "Realtà", "Realistico"], answer: "Realmente" },
+            { question: "Quale fra le seguenti parole corrisponde a una preposizione?", options: ["Retro", "Sulle", "Bene", "Loro"], answer: "Sulle" },
+            { question: "Quale fra le seguenti parole corrisponde a una preposizione?", options: ["Da", "Perché", "Veramente", "Oggi"], answer: "Da" },
+            { question: "Quale fra le seguenti parole corrisponde a un sostantivo?", options: ["Normale", "Scheletro", "Poi", "Ma"], answer: "Scheletro" },
+            { question: "Quale fra le seguenti parole corrisponde a un articolo?", options: ["Con", "Me", "Lo", "Anche"], answer: "Lo" },
+            { question: "Quale fra le seguenti parole corrisponde a un sostantivo?", options: ["Diavolo", "Basso", "Già", "Due"], answer: "Diavolo" },
+            { question: "Quale fra le seguenti parole corrisponde a un aggettivo?", options: ["Lato", "Grasso", "Domani", "Dalla"], answer: "Grasso" },
+            { question: "Quale fra le seguenti parole corrisponde a una congiunzione?", options: ["Stesso", "Il", "Vi", "Nonostante"], answer: "Nonostante" },
+            { question: "Quale fra le seguenti parole corrisponde a un aggettivo?", options: ["Sprovvisto", "Edificio", "Fuori", "Ieri"], answer: "Sprovvisto" },
+            { question: "Quale fra le seguenti parole corrisponde a un avverbio?", options: ["Ma", "Noi", "Forse", "Dello"], answer: "Forse" },
+            { question: "Quale fra le seguenti parole corrisponde a un articolo?", options: ["Inoltre", "Ci", "Tra", "Gli"], answer: "Gli" },
+            { question: "Quale fra le seguenti parole corrisponde a un aggettivo?", options: ["Dentro", "Alluvione", "Di", "Impegnativo"], answer: "Impegnativo" },
+            { question: "Quale fra le seguenti parole corrisponde a una congiunzione?", options: ["Per", "Da", "Poiché", "Loro"], answer: "Poiché" },
+            { question: "Quale fra le seguenti parole corrisponde a una congiunzione?", options: ["Benché", "Medesimo", "Sugli", "In"], answer: "Benché" },
+            { question: "Quale fra le seguenti parole corrisponde a un sostantivo?", options: ["Con", "Regolare", "Profumo", "Degli"], answer: "Profumo" },
+            { question: "\"Congiura\" è:", options: ["Un nome ottenuto mediante prefisso.", "Un nome ottenuto mediante suffisso.", "Un nome ottenuto mediante prefisso e suffisso.", "Un nome ottenuto mediante derivazione immediata (cioè senza suffisso)."], answer: "Un nome ottenuto mediante derivazione immediata (cioè senza suffisso)." }
+        ];
+
+        // --- ELEMENTI DEL DOM ---
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score-display');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const answerOptions = document.getElementById('answer-options');
+        
+        const finalScore = document.getElementById('final-score');
+
+        // --- VARIABILI DI STATO DEL QUIZ ---
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const TOTAL_QUESTIONS = 40;
+
+        // --- FUNZIONI ---
+
+        /**
+         * Mescola un array in modo casuale (algoritmo di Fisher-Yates).
+         * @param {Array} array L'array da mescolare.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * Inizia o reinizia il quiz.
+         */
+        function startQuiz() {
+            // Resetta lo stato
+            currentQuestionIndex = 0;
+            score = 0;
+
+            // Seleziona 40 domande casuali
+            shuffleArray(quizData);
+            currentQuestions = quizData.slice(0, TOTAL_QUESTIONS);
+
+            // Mostra la schermata del quiz e nascondi le altre
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+
+            // Mostra la prima domanda
+            displayQuestion();
+        }
+
+        /**
+         * Mostra la domanda corrente e le opzioni di risposta.
+         */
+        function displayQuestion() {
+            // Pulisce le opzioni precedenti
+            answerOptions.innerHTML = '';
+            answerOptions.classList.remove('disabled-options');
+
+            // Prende la domanda corrente
+            const question = currentQuestions[currentQuestionIndex];
+            
+            // Aggiorna l'interfaccia
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Domanda ${currentQuestionIndex + 1} di ${TOTAL_QUESTIONS}`;
+            scoreDisplay.textContent = `Punteggio: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex) / TOTAL_QUESTIONS) * 100}%`;
+
+            // Mescola le opzioni di risposta
+            const shuffledOptions = [...question.options];
+            shuffleArray(shuffledOptions);
+
+            // Crea e aggiunge i bottoni per le risposte
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('answer-btn', 'w-full', 'p-4', 'text-left', 'bg-gray-200', 'dark:bg-gray-700', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'rounded-lg', 'border-2', 'border-transparent');
+                button.addEventListener('click', handleAnswer);
+                answerOptions.appendChild(button);
+            });
+        }
+
+        /**
+         * Gestisce la selezione di una risposta da parte dell'utente.
+         * @param {Event} e L'evento click.
+         */
+        function handleAnswer(e) {
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentQuestions[currentQuestionIndex].answer;
+
+            // Disabilita ulteriori click
+            answerOptions.classList.add('disabled-options');
+
+            // Controlla se la risposta è corretta
+            if (selectedAnswer === correctAnswer) {
+                score++;
+                selectedButton.classList.add('correct');
+            } else {
+                selectedButton.classList.add('incorrect');
+                // Evidenzia la risposta corretta
+                Array.from(answerOptions.children).forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Aggiorna il punteggio visualizzato
+            scoreDisplay.textContent = `Punteggio: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%`;
+
+
+            // Passa alla prossima domanda dopo un breve ritardo
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                    displayQuestion();
+                } else {
+                    endQuiz();
+                }
+            }, 1500); // 1.5 secondi di attesa
+        }
+
+        /**
+         * Termina il quiz e mostra la schermata finale.
+         */
+        function endQuiz() {
+            quizScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            finalScore.textContent = `${score} / ${TOTAL_QUESTIONS}`;
+        }
+
+        // --- EVENT LISTENERS ---
+        startBtn.addEventListener('click', startQuiz);
+        restartBtn.addEventListener('click', startQuiz);
+
+    </script>
+</body>
+</html>
