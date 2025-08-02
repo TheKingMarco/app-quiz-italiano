@@ -3,6 +3,29 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
+/* Base style for answer buttons to align text and icon */
+.answer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Add a subtle lift effect on hover */
+.answer-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* General style for the feedback icon */
+.feedback-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease-in-out;
+}
+
 /* Style for a correct answer button */
 .correct {
     background-color: #22c55e !important; /* green-500 */
@@ -17,6 +40,23 @@ body {
     color: white !important;
     border-color: #dc2626 !important; /* red-600 */
 }
+
+/* Makes the icon visible and animates it */
+.correct .feedback-icon, .incorrect .feedback-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Specific color for the correct icon */
+.icon-correct {
+    color: #a7f3d0; /* A lighter green for contrast */
+}
+
+/* Specific color for the incorrect icon */
+.icon-incorrect {
+    color: #fecaca; /* A lighter red for contrast */
+}
+
 
 /* Disables pointer events on the answer container after a selection is made */
 .disabled-options {
