@@ -30,6 +30,17 @@
             <div id="subject-list" class="grid grid-cols-1 gap-4">
                 <!-- Subject buttons will be dynamically inserted here -->
             </div>
+            <button id="go-to-history-btn" class="mt-8 w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all duration-200">
+                Storico Quiz
+            </button>
+        </section>
+
+        <section id="history-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-8">Storico Quiz Completati</h2>
+            <div id="history-list" class="flex flex-col gap-4">
+                <p id="no-history-message" class="text-center text-gray-500 dark:text-gray-400">Ancora nessun quiz completato. Inizia uno per vedere la cronologia qui!</p>
+            </div>
+            <button id="back-from-history-btn" class="mt-8 text-indigo-600 dark:text-indigo-400 hover:underline">Torna alle materie</button>
         </section>
 
         <!-- Quiz Screen -->

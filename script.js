@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         home: document.getElementById('home-screen'),
         subject: document.getElementById('subject-screen'),
         quiz: document.getElementById('quiz-screen'),
-        end: document.getElementById('end-screen')
+        end: document.getElementById('end-screen'),
+        history: historyScreen // Add the new screen
     };
 
     const subjectList = document.getElementById('subject-list');
@@ -32,12 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const answerOptions = document.getElementById('answer-options');
     const finalScore = document.getElementById('final-score');
     const endSubjectTitle = document.getElementById('end-subject-title');
+    const historyScreen = document.getElementById('history-screen');
+    const historyList = document.getElementById('history-list');
+    const noHistoryMessage = document.getElementById('no-history-message');
 
     // Buttons
     const goToSubjectsBtn = document.getElementById('go-to-subjects-btn');
     const restartBtn = document.getElementById('restart-btn');
     const backToSubjectsBtnQuiz = document.getElementById('back-to-subjects-btn-quiz');
     const backToSubjectsBtnEnd = document.getElementById('back-to-subjects-btn-end');
+    const goToHistoryBtn = document.getElementById('go-to-history-btn');
+    const backFromHistoryBtn = document.getElementById('back-from-history-btn');
 
     // --- VARIABILI DI STATO DEL QUIZ ---
     let currentQuestions = [];
@@ -63,6 +69,50 @@ document.addEventListener('DOMContentLoaded', () => {
             subjectList.appendChild(button);
         }
     }
+
+        // --- NEW FUNCTIONS FOR HISTORY ---
+    function saveQuizResult() {
+        const quizResult = {
+            subject: currentSubject,
+            score: score,
+            totalQuestions: currentQuestions.length,
+            date: new Date().toISOString() // Save in a standard format
+        };
+
+        const history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+        history.push(quizResult);
+        localStorage.setItem('quizHistory', JSON.stringify(history));
+    }
+
+    function displayHistory() {
+        const history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+        historyList.innerHTML = ''; // Clear previous list
+
+        if (history.length === 0) {
+            noHistoryMessage.classList.remove('hidden');
+        } else {
+            noHistoryMessage.classList.add('hidden');
+            // Sort by date, most recent first
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            history.forEach(item => {
+                const quizItem = document.createElement('div');
+                quizItem.className = 'p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow';
+                const date = new Date(item.date).toLocaleDateString('it-IT', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                
+                quizItem.innerHTML = `
+                    <p class="text-lg font-bold">${item.subject}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">${date}</p>
+                    <p class="mt-2 text-xl font-extrabold text-indigo-600 dark:text-indigo-400">Punteggio: ${item.score} / ${item.totalQuestions}</p>
+                `;
+                historyList.appendChild(quizItem);
+            });
+        }
+        showScreen('history');
+    }
+
 
     function startQuiz(subject) {
         currentSubject = subject;
@@ -160,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function endQuiz() {
+        saveQuizResult(); // Call the new function to save the result
         showScreen('end');
         finalScore.textContent = `${score} / ${currentQuestions.length}`;
         endSubjectTitle.textContent = `Materia: ${currentSubject}`;
@@ -174,7 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS ---
     goToSubjectsBtn.addEventListener('click', () => showScreen('subject'));
-    
+    // NEW EVENT LISTENERS
+    goToHistoryBtn.addEventListener('click', displayHistory);
+    backFromHistoryBtn.addEventListener('click', () => showScreen('subject'));
     const goBack = () => showScreen('subject');
     backToSubjectsBtnQuiz.addEventListener('click', goBack);
     backToSubjectsBtnEnd.addEventListener('click', goBack);
