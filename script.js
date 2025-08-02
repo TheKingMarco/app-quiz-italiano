@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         subjectList.innerHTML = '';
         for (const subject in quizDatabase) {
             const button = document.createElement('button');
-            button.className = 'subject-btn';
+            button.className = 'w-full p-5 text-left bg-gray-100 dark:bg-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg border-2 border-transparent hover:border-indigo-500 transition-all duration-200 cursor-pointer';
             button.innerHTML = `<h3 class="text-xl font-bold">${subject}</h3><p class="text-gray-600 dark:text-gray-400">${quizDatabase[subject].length} domande disponibili</p>`;
             button.addEventListener('click', () => startQuiz(subject));
             subjectList.appendChild(button);
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shuffledOptions.forEach(option => {
             const button = document.createElement('button');
             button.textContent = option;
-            button.className = 'answer-btn';
+            button.className = 'w-full p-4 text-left bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg border-2 border-transparent transition-all duration-200';
             button.addEventListener('click', handleAnswer);
             answerOptions.appendChild(button);
         });
