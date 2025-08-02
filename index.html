@@ -11,13 +11,27 @@
 <body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
 
     <main id="app-container" class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 text-gray-800 dark:text-gray-200">
-
-        <section id="home-screen" class="text-center">
+        
+        <section id="auth-screen" class="text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-4">Quiz Master</h1>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mb-10">Seleziona una materia e metti alla prova le tue conoscenze.</p>
-            <button id="go-to-subjects-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-12 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
-                Inizia
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-10">Accedi per iniziare il tuo quiz.</p>
+            <button id="google-signin-btn" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-12 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
+                Accedi con Google
             </button>
+        </section>
+
+        <section id="home-screen" class="hidden text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-4">Quiz Master</h1>
+            <p id="user-display" class="text-xl text-gray-600 dark:text-gray-400 mb-4">Benvenuto, Utente!</p>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-10">Seleziona una materia e metti alla prova le tue conoscenze.</p>
+            <div class="flex flex-col md:flex-row justify-center gap-4">
+                 <button id="go-to-subjects-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-12 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
+                    Inizia
+                </button>
+                 <button id="signout-btn" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Disconnetti
+                </button>
+            </div>
         </section>
 
         <section id="subject-screen" class="hidden">
@@ -67,6 +81,9 @@
         </section>
 
     </main>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
 
     <script src="script.js" defer></script>
 </body>

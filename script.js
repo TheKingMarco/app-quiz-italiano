@@ -1,3 +1,18 @@
+// Add your Firebase configuration here
+const firebaseConfig = {
+    apiKey: "AIzaSyAQpf7efo2K-2biS_M2vAEGQL8hSSVU7xE",
+    authDomain: "app-quiz-4d93b.firebaseapp.com",
+    projectId: "app-quiz-4d93b",
+    storageBucket: "app-quiz-4d93b.firebasestorage.app",
+    messagingSenderId: "462622793680",
+    appId: "1:462622793680:web:0e4f2e73c0907b1a41e3d5"
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATABASE DELLE DOMANDE ---
@@ -16,11 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ELEMENTI DEL DOM ---
     const screens = {
+        auth: document.getElementById('auth-screen'),
         home: document.getElementById('home-screen'),
         subject: document.getElementById('subject-screen'),
         quiz: document.getElementById('quiz-screen'),
         end: document.getElementById('end-screen'),
-        history: document.getElementById('history-screen') // NEW
+        history: document.getElementById('history-screen')
     };
 
     const subjectList = document.getElementById('subject-list');
@@ -32,19 +48,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalScore = document.getElementById('final-score');
     const endSubjectTitle = document.getElementById('end-subject-title');
 
-    // NEW DOM elements for history
     const historyList = document.getElementById('history-list');
     const noHistoryMessage = document.getElementById('no-history-message');
 
     // Buttons
+    const googleSigninBtn = document.getElementById('google-signin-btn');
+    const signOutBtn = document.getElementById('signout-btn');
     const goToSubjectsBtn = document.getElementById('go-to-subjects-btn');
     const restartBtn = document.getElementById('restart-btn');
     const backToSubjectsBtnQuiz = document.getElementById('back-to-subjects-btn-quiz');
     const backToSubjectsBtnEnd = document.getElementById('back-to-subjects-btn-end');
-
-    // NEW Buttons for history
     const goToHistoryBtn = document.getElementById('go-to-history-btn');
     const backFromHistoryBtn = document.getElementById('back-from-history-btn');
+
+    // Display elements for user info
+    const userDisplay = document.getElementById('user-display');
 
     // --- VARIABILI DI STATO DEL QUIZ ---
     let currentQuestions = [];
@@ -58,6 +76,38 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(screens).forEach(screen => screen.classList.add('hidden'));
         screens[screenName].classList.remove('hidden');
     }
+
+    // --- FUNZIONI DI AUTENTICAZIONE ---
+    function handleSignIn() {
+        auth.signInWithPopup(googleProvider)
+            .catch(error => {
+                console.error("Sign-in failed:", error.message);
+                alert("Errore durante l'accesso. Riprova.");
+            });
+    }
+
+    function handleSignOut() {
+        auth.signOut()
+            .then(() => {
+                console.log("User signed out.");
+            })
+            .catch(error => {
+                console.error("Sign-out failed:", error.message);
+            });
+    }
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // User is signed in
+            console.log("User signed in:", user.displayName);
+            userDisplay.textContent = `Benvenuto, ${user.displayName}!`;
+            showScreen('home');
+        } else {
+            // User is signed out
+            console.log("No user signed in.");
+            showScreen('auth');
+        }
+    });
 
     // --- FUNZIONI PRINCIPALI ---
     function initializeSubjectMenu() {
@@ -155,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     }
     
-    // NEW: Function to save the quiz result to localStorage
     function saveQuizResult() {
         const quizResult = {
             subject: currentSubject,
@@ -170,22 +219,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function endQuiz() {
-        saveQuizResult(); // Call the new function to save the result
+        saveQuizResult();
         showScreen('end');
         finalScore.textContent = `${score} / ${currentQuestions.length}`;
         endSubjectTitle.textContent = `Materia: ${currentSubject}`;
     }
 
-    // NEW: Function to display the history
     function displayHistory() {
         const history = JSON.parse(localStorage.getItem('quizHistory')) || [];
-        historyList.innerHTML = ''; // Clear previous list
+        historyList.innerHTML = '';
+        noHistoryMessage.classList.add('hidden');
 
         if (history.length === 0) {
             noHistoryMessage.classList.remove('hidden');
         } else {
-            noHistoryMessage.classList.add('hidden');
-            // Sort by date, most recent first
             history.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             history.forEach(item => {
@@ -214,7 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
-    goToSubjectsBtn.addEventListener('click', () => showScreen('subject'));
+    googleSigninBtn.addEventListener('click', handleSignIn);
+    signOutBtn.addEventListener('click', handleSignOut);
+    goToSubjectsBtn.addEventListener('click', () => {
+        initializeSubjectMenu();
+        showScreen('subject');
+    });
     
     const goBack = () => showScreen('subject');
     backToSubjectsBtnQuiz.addEventListener('click', goBack);
@@ -222,11 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     restartBtn.addEventListener('click', () => startQuiz(currentSubject));
 
-    // NEW EVENT LISTENERS for history
     goToHistoryBtn.addEventListener('click', displayHistory);
     backFromHistoryBtn.addEventListener('click', () => showScreen('subject'));
-
-    // --- INIZIALIZZAZIONE ---
-    initializeSubjectMenu();
-    showScreen('home');
+    
+    // The initial screen is now determined by Firebase auth state
+    // No need to call showScreen('home') or similar here.
 });
