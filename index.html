@@ -3,71 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
     <title>Quiz Master</title>
+    <script>
+        // Applica il tema prima del render per evitare flash
+        (function () {
+            try {
+                const saved = localStorage.getItem('qm-theme');
+                const dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { /* storage non disponibile */ }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' };</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+<body class="min-h-screen text-slate-800 dark:text-slate-100">
 
-    <main id="app-container" class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 text-gray-800 dark:text-gray-200">
-        
-        <section id="home-screen" class="text-center">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-4">Quiz Master</h1>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mb-10">Seleziona una materia e metti alla prova le tue conoscenze</p>
-                 <button id="go-to-subjects-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-12 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform duration-200">
-                    Inizia
-                </button>
-        </section>
+    <!-- Sfondo animato -->
+    <div class="bg-blobs" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <span class="blob blob-3"></span>
+    </div>
 
-        <section id="subject-screen" class="hidden">
-            <h2 class="text-3xl font-bold text-center mb-8">Scegli una Materia</h2>
-            <div id="subject-list" class="grid grid-cols-1 gap-4">
-                </div>
-            <button id="go-to-history-btn" class="mt-8 w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all duration-200">
-                Storico Quiz
+    <!-- Barra superiore -->
+    <header id="top-bar" class="top-bar hidden">
+        <button id="brand-btn" class="flex items-center gap-2 font-extrabold text-lg">
+            <span class="brand-logo">Q</span>
+            <span class="hidden sm:inline">Quiz Master</span>
+        </button>
+        <div class="flex items-center gap-2">
+            <button id="theme-toggle" class="icon-btn" title="Cambia tema" aria-label="Cambia tema">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
             </button>
-        </section>
-
-        <section id="history-screen" class="hidden">
-            <h2 class="text-3xl font-bold text-center mb-8">Storico Quiz Completati</h2>
-            <div id="history-list" class="flex flex-col gap-4">
-                <p id="no-history-message" class="text-center text-gray-500 dark:text-gray-400 hidden">Ancora nessun quiz completato. Inizia uno per vedere la cronologia qui!</p>
-            </div>
-            <button id="back-from-history-btn" class="mt-8 text-indigo-600 dark:text-indigo-400 hover:underline">Torna alle materie</button>
-        </section>
-
-        <section id="quiz-screen" class="hidden">
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-2">
-                    <p id="question-counter" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Domanda 1 di 40</p>
-                    <p id="score-display" class="text-sm font-semibold text-gray-600 dark:text-gray-400">Punteggio: 0</p>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"></div>
+            <div class="relative">
+                <button id="user-menu-btn" class="user-chip" aria-haspopup="true" aria-expanded="false">
+                    <img id="user-avatar" class="avatar" alt="" referrerpolicy="no-referrer">
+                    <span id="user-name" class="hidden sm:inline max-w-[10rem] truncate font-semibold text-sm"></span>
+                </button>
+                <div id="user-menu" class="dropdown hidden">
+                    <p id="user-email" class="px-4 pt-3 pb-2 text-xs text-slate-500 dark:text-slate-400 truncate"></p>
+                    <button id="signout-btn" class="dropdown-item text-rose-600 dark:text-rose-400">Esci</button>
                 </div>
             </div>
-            
-            <h2 id="question-text" class="text-xl md:text-2xl font-semibold mb-6 text-center min-h-[100px] flex items-center justify-center"></h2>
-            
-            <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
-            <button id="back-to-subjects-btn-quiz" class="mt-8 text-indigo-600 dark:text-indigo-400 hover:underline">Torna alle materie</button>
+        </div>
+    </header>
+
+    <main id="app-container" class="app-shell">
+
+        <!-- CARICAMENTO -->
+        <section id="loading-screen" class="screen active text-center py-20">
+            <div class="spinner mx-auto mb-6"></div>
+            <p id="loading-text" class="text-slate-500 dark:text-slate-400">Caricamento…</p>
         </section>
 
-        <section id="end-screen" class="hidden text-center">
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">Quiz Completato!</h1>
-            <p id="end-subject-title" class="text-lg text-gray-500 dark:text-gray-400 mb-4"></p>
-            <p class="text-xl text-gray-600 dark:text-gray-300 mb-2">Il tuo punteggio finale è:</p>
-            <p id="final-score" class="text-6xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-8">0 / 40</p>
-            <div class="flex flex-col md:flex-row justify-center gap-4">
-                <button id="restart-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all duration-200">Riprova Quiz</button>
-                <button id="back-to-subjects-btn-end" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-all duration-200">Scegli un'altra Materia</button>
+        <!-- AUTENTICAZIONE -->
+        <section id="auth-screen" class="screen">
+            <div class="card max-w-md mx-auto p-8 text-center">
+                <div class="brand-logo brand-logo-lg mx-auto mb-5 float">Q</div>
+                <h1 class="text-3xl font-extrabold gradient-text mb-2">Quiz Master</h1>
+                <p class="text-slate-500 dark:text-slate-400 mb-8">Accedi per allenarti sui test di amministrazione</p>
+
+                <div class="flex flex-col gap-3">
+                    <button id="google-signin-btn" class="social-btn social-google" data-provider="google">
+                        <svg viewBox="0 0 48 48" class="w-5 h-5"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                        <span>Continua con Google</span>
+                    </button>
+                    <button id="facebook-signin-btn" class="social-btn social-facebook" data-provider="facebook">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07"/></svg>
+                        <span>Continua con Facebook</span>
+                    </button>
+                </div>
+
+                <div id="email-auth-block">
+                    <div class="divider"><span>oppure con email</span></div>
+                    <form id="email-form" class="flex flex-col gap-3 text-left" novalidate>
+                        <input id="email-input" type="email" autocomplete="email" required placeholder="Email" class="input">
+                        <input id="password-input" type="password" autocomplete="current-password" required minlength="6" placeholder="Password (min. 6 caratteri)" class="input">
+                        <button type="submit" id="email-submit-btn" class="btn-primary w-full">Accedi</button>
+                    </form>
+                    <div class="flex justify-between text-sm mt-3">
+                        <button id="toggle-register-btn" class="link">Non hai un account? Registrati</button>
+                        <button id="reset-password-btn" class="link">Password dimenticata?</button>
+                    </div>
+                </div>
+
+                <p id="auth-error" class="auth-error hidden" role="alert"></p>
             </div>
         </section>
 
+        <!-- DASHBOARD -->
+        <section id="home-screen" class="screen">
+            <div class="mb-8 stagger">
+                <p class="text-slate-500 dark:text-slate-400 font-medium">Bentornato,</p>
+                <h1 id="welcome-name" class="text-3xl md:text-4xl font-extrabold gradient-text"></h1>
+            </div>
+
+            <div id="resume-banner" class="card resume-banner hidden mb-6">
+                <div>
+                    <p class="font-bold">Hai un quiz in sospeso</p>
+                    <p id="resume-info" class="text-sm opacity-80"></p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="discard-resume-btn" class="btn-ghost btn-sm">Scarta</button>
+                    <button id="resume-btn" class="btn-primary btn-sm">Riprendi</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 stagger">
+                <div class="stat-card"><p class="stat-label">Quiz completati</p><p id="stat-quizzes" class="stat-value">0</p></div>
+                <div class="stat-card"><p class="stat-label">Media</p><p id="stat-average" class="stat-value">–</p></div>
+                <div class="stat-card"><p class="stat-label">Risposte date</p><p id="stat-answered" class="stat-value">0</p></div>
+                <div class="stat-card"><p class="stat-label">Errori da ripassare</p><p id="stat-mistakes" class="stat-value">0</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+                <button id="go-to-subjects-btn" class="action-card action-primary">
+                    <span class="action-icon">▶</span>
+                    <span class="text-lg font-bold">Nuovo quiz</span>
+                    <span class="text-sm opacity-80">Scegli una materia e inizia</span>
+                </button>
+                <button id="go-to-mistakes-btn" class="action-card">
+                    <span class="action-icon">↻</span>
+                    <span class="text-lg font-bold">Ripassa errori</span>
+                    <span class="text-sm opacity-70">Rifai le domande sbagliate</span>
+                </button>
+                <button id="go-to-history-btn" class="action-card">
+                    <span class="action-icon">☰</span>
+                    <span class="text-lg font-bold">Storico</span>
+                    <span class="text-sm opacity-70">Risultati e andamento</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- MATERIE -->
+        <section id="subject-screen" class="screen">
+            <div class="flex items-center gap-3 mb-6">
+                <button class="icon-btn back-home" aria-label="Indietro">←</button>
+                <h2 class="text-2xl md:text-3xl font-bold">Scegli una materia</h2>
+            </div>
+            <div class="relative mb-6">
+                <input id="subject-search" type="search" placeholder="Cerca materia…" class="input pl-11" autocomplete="off">
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </div>
+            <div id="subject-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <p id="no-subject-message" class="text-center text-slate-500 dark:text-slate-400 py-10 hidden">Nessuna materia trovata.</p>
+        </section>
+
+        <!-- QUIZ -->
+        <section id="quiz-screen" class="screen">
+            <div class="card p-5 md:p-6 mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span id="quiz-subject" class="badge"></span>
+                        <span id="quiz-mode-badge" class="badge badge-soft"></span>
+                    </div>
+                    <div id="timer" class="timer hidden" aria-live="polite">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>
+                        <span id="timer-text">00:00</span>
+                    </div>
+                </div>
+
+                <div class="progress-track mb-3" aria-hidden="true">
+                    <div id="progress-answered" class="progress-fill"></div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                    <span class="chip"><span id="live-answered">0</span>/<span id="live-total">0</span> risposte</span>
+                    <span id="live-correct-chip" class="chip chip-green">✓ <span id="live-correct">0</span></span>
+                    <span id="live-wrong-chip" class="chip chip-red">✗ <span id="live-wrong">0</span></span>
+                    <span class="chip chip-amber">⚑ <span id="live-flagged">0</span></span>
+                    <span id="live-percent-chip" class="chip chip-indigo"><span id="live-percent">0</span>% corrette</span>
+                    <button id="toggle-palette-btn" class="chip chip-btn ml-auto" aria-expanded="false">Panoramica ▾</button>
+                </div>
+
+                <div id="palette-wrap" class="palette-wrap">
+                    <div>
+                    <div id="question-palette" class="palette"></div>
+                    <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mt-3">
+                        <span class="legend"><i class="dot dot-current"></i>Attuale</span>
+                        <span class="legend"><i class="dot dot-answered"></i>Risposta</span>
+                        <span class="legend legend-feedback"><i class="dot dot-correct"></i>Corretta</span>
+                        <span class="legend legend-feedback"><i class="dot dot-wrong"></i>Errata</span>
+                        <span class="legend"><i class="dot dot-flagged"></i>Segnata</span>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="question-card" class="card p-6 md:p-8">
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <p id="question-counter" class="text-sm font-bold text-indigo-600 dark:text-indigo-400">Domanda 1 di 40</p>
+                    <button id="flag-btn" class="flag-btn" title="Segna per revisione (F)" aria-pressed="false">⚑ <span class="hidden sm:inline">Segna</span></button>
+                </div>
+                <h2 id="question-text" class="text-lg md:text-xl font-semibold leading-relaxed mb-6"></h2>
+                <div id="answer-options" class="flex flex-col gap-3" role="radiogroup"></div>
+                <p id="answer-hint" class="answer-hint hidden"></p>
+            </div>
+
+            <div class="quiz-nav">
+                <button id="prev-btn" class="btn-ghost">← <span class="hidden sm:inline">Precedente</span></button>
+                <button id="finish-btn" class="btn-finish">Termina</button>
+                <button id="next-btn" class="btn-primary"><span class="hidden sm:inline">Successiva</span> →</button>
+            </div>
+            <div class="flex justify-between items-center mt-4 text-xs text-slate-500 dark:text-slate-400">
+                <button id="exit-quiz-btn" class="link">Esci (il progresso viene salvato)</button>
+                <span class="hidden md:inline">Scorciatoie: 1–4 risposta · ← → naviga · F segna</span>
+            </div>
+        </section>
+
+        <!-- RISULTATI -->
+        <section id="end-screen" class="screen">
+            <div class="card p-8 text-center mb-6">
+                <p id="end-subject-title" class="badge mx-auto mb-4"></p>
+                <h1 id="end-title" class="text-3xl md:text-4xl font-extrabold mb-6">Quiz completato!</h1>
+                <div class="score-ring mx-auto mb-6">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                        <circle id="score-ring-fill" class="ring-fill" cx="60" cy="60" r="52"/>
+                    </svg>
+                    <div class="score-ring-label">
+                        <span id="final-percent" class="text-4xl font-extrabold">0%</span>
+                        <span id="final-score" class="text-sm text-slate-500 dark:text-slate-400">0 / 0</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                    <div class="stat-card"><p class="stat-label">Corrette</p><p id="end-correct" class="stat-value text-emerald-500">0</p></div>
+                    <div class="stat-card"><p class="stat-label">Errate</p><p id="end-wrong" class="stat-value text-rose-500">0</p></div>
+                    <div class="stat-card"><p class="stat-label">Non risposte</p><p id="end-skipped" class="stat-value text-slate-400">0</p></div>
+                    <div class="stat-card"><p class="stat-label">Tempo</p><p id="end-time" class="stat-value">0:00</p></div>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-center gap-3">
+                    <button id="retry-wrong-btn" class="btn-primary">Ripeti solo errori</button>
+                    <button id="restart-btn" class="btn-ghost">Nuovo quiz stessa materia</button>
+                    <button id="back-to-subjects-btn-end" class="btn-ghost">Altre materie</button>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 class="text-xl font-bold">Revisione risposte</h3>
+                    <div class="segmented" id="review-filter">
+                        <button data-filter="all" class="active">Tutte</button>
+                        <button data-filter="wrong">Errate</button>
+                        <button data-filter="skipped">Saltate</button>
+                        <button data-filter="flagged">Segnate</button>
+                    </div>
+                </div>
+                <div id="review-list" class="flex flex-col gap-3"></div>
+            </div>
+        </section>
+
+        <!-- STORICO -->
+        <section id="history-screen" class="screen">
+            <div class="flex items-center justify-between gap-3 mb-6">
+                <div class="flex items-center gap-3">
+                    <button class="icon-btn back-home" aria-label="Indietro">←</button>
+                    <h2 class="text-2xl md:text-3xl font-bold">Storico</h2>
+                </div>
+                <button id="clear-history-btn" class="btn-ghost btn-sm text-rose-600 dark:text-rose-400">Cancella storico</button>
+            </div>
+            <div id="history-chart-card" class="card p-5 mb-6 hidden">
+                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">Andamento ultimi quiz (% corrette)</p>
+                <div id="history-chart" class="history-chart"></div>
+            </div>
+            <div id="history-list" class="flex flex-col gap-3"></div>
+            <p id="no-history-message" class="text-center text-slate-500 dark:text-slate-400 py-10 hidden">Ancora nessun quiz completato. Inizia uno per vedere la cronologia qui!</p>
+        </section>
     </main>
-    
-    <script src="script.js" defer></script> 
+
+    <!-- Modale configurazione quiz -->
+    <div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-panel">
+            <h3 id="setup-title" class="text-2xl font-bold mb-1"></h3>
+            <p id="setup-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mb-6"></p>
+
+            <label class="field-label">Modalità</label>
+            <div class="mode-grid mb-5">
+                <label class="mode-option">
+                    <input type="radio" name="mode" value="practice" checked>
+                    <span><b>Allenamento</b><small>Correzione immediata dopo ogni risposta</small></span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="mode" value="exam">
+                    <span><b>Simulazione esame</b><small>Risposte modificabili, esito solo alla fine</small></span>
+                </label>
+            </div>
+
+            <label class="field-label" for="question-count">Numero di domande</label>
+            <div class="segmented mb-5" id="question-count">
+                <button data-count="10">10</button>
+                <button data-count="20">20</button>
+                <button data-count="40" class="active">40</button>
+                <button data-count="all">Tutte</button>
+            </div>
+
+            <label class="field-label" for="timer-select">Tempo limite</label>
+            <select id="timer-select" class="input mb-5">
+                <option value="0">Nessun limite</option>
+                <option value="15">15 minuti</option>
+                <option value="30">30 minuti</option>
+                <option value="45">45 minuti</option>
+                <option value="60">60 minuti</option>
+            </select>
+
+            <label class="toggle mb-6">
+                <input type="checkbox" id="shuffle-options" checked>
+                <span class="toggle-track"></span>
+                <span>Mescola l'ordine delle risposte</span>
+            </label>
+
+            <div class="flex gap-3 justify-end">
+                <button class="btn-ghost" data-close>Annulla</button>
+                <button id="start-quiz-btn" class="btn-primary">Inizia quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale conferma generica -->
+    <div id="confirm-modal" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-panel max-w-sm">
+            <h3 id="confirm-title" class="text-xl font-bold mb-2"></h3>
+            <p id="confirm-text" class="text-slate-500 dark:text-slate-400 mb-6"></p>
+            <div class="flex gap-3 justify-end">
+                <button class="btn-ghost" data-close>Annulla</button>
+                <button id="confirm-ok-btn" class="btn-primary">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        // Se il modulo non parte (es. Firebase non raggiungibile) mostra un messaggio invece di uno spinner infinito
+        setTimeout(function () {
+            if (!window.__qmBooted) {
+                document.getElementById('loading-text').textContent = 'Impossibile avviare l\'app: controlla la connessione e ricarica la pagina.';
+            }
+        }, 10000);
+    </script>
 </body>
 </html>
